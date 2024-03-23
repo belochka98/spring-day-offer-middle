@@ -1,53 +1,86 @@
 package com.onedayoffer.taskdistribution.services;
 
-import com.onedayoffer.taskdistribution.DTO.EmployeeDTO;
-import com.onedayoffer.taskdistribution.DTO.TaskDTO;
-import com.onedayoffer.taskdistribution.DTO.TaskStatus;
-import com.onedayoffer.taskdistribution.repositories.EmployeeRepository;
-import com.onedayoffer.taskdistribution.repositories.TaskRepository;
-import jakarta.transaction.Transactional;
+import com.onedayoffer.taskdistribution.domain.entities.Task;
+import com.onedayoffer.taskdistribution.domain.enums.TaskStatus;
+import com.onedayoffer.taskdistribution.domain.repositories.EmployeeRepository;
+import com.onedayoffer.taskdistribution.domain.repositories.TaskRepository;
+import com.onedayoffer.taskdistribution.web.api.v1.dto.EmployeeDto;
+import com.onedayoffer.taskdistribution.web.api.v1.dto.TaskDto;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
-import org.springframework.lang.Nullable;
+import org.modelmapper.TypeToken;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * <p>Employee service logic-level</p>
+ * Note: all operations under @Transactional(readonly=true),
+ * cuz open-session-in-view has been disabled
+ *
+ * @author Sviridov_V_A
+ * @version 1.0.0-SNAPSHOT
+ * @since 2024-03-23
+ */
+@Slf4j
+@Transactional(readOnly = true)
 @Service
 @AllArgsConstructor
 public class EmployeeService {
-
     private final EmployeeRepository employeeRepository;
     private final TaskRepository taskRepository;
     private final ModelMapper modelMapper;
 
-    public List<EmployeeDTO> getEmployees(@Nullable String sortDirection) {
-        throw new java.lang.UnsupportedOperationException("implement getEmployees");
+    public List<EmployeeDto> getEmployees(String fio) {
+        final var employees = StringUtils.isBlank(fio)
+                              ? employeeRepository.findAll()
+                              : employeeRepository.findAll(Sort.by(Sort.Direction.ASC, fio));
 
-        // if sortDirection.isPresent() ..
-        // Sort.Direction direction = ...
-        // employees = employeeRepository.findAllAndSort(Sort.by(direction, "fio"))
-        // employees = employeeRepository.findAll()
-        // Type listType = new TypeToken<List<EmployeeDTO>>() {}.getType()
-        // List<EmployeeDTO> employeeDTOS = modelMapper.map(employees, listType)
+        return modelMapper.map(employees, new TypeToken<List<EmployeeDto>>() {
+        }.getType());
     }
 
-    @Transactional
-    public EmployeeDTO getOneEmployee(Integer id) {
-        throw new java.lang.UnsupportedOperationException("implement getOneEmployee");
+
+    public EmployeeDto getOneEmployee(Integer id) {
+        final var employee = employeeRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+
+        return modelMapper.map(employee, new TypeToken<EmployeeDto>() {
+        }.getType());
     }
 
-    public List<TaskDTO> getTasksByEmployeeId(Integer id) {
-        throw new java.lang.UnsupportedOperationException("implement getTasksByEmployeeId");
+    public List<TaskDto> getTasksByEmployeeId(Integer id) {
+        final var tasks = employeeRepository.findById(id)
+                .orElseThrow(EntityNotFoundException::new)
+                .getTasks();
+
+        return modelMapper.map(tasks, new TypeToken<List<TaskDto>>() {
+        }.getType());
     }
 
+    // ToDo: check if status is null
     @Transactional
     public void changeTaskStatus(Integer taskId, TaskStatus status) {
-        throw new java.lang.UnsupportedOperationException("implement changeTaskStatus");
+        log.info("Trying to set new status {} to task {}", status, taskId);
+
+        taskRepository.findById(taskId).orElseThrow(EntityNotFoundException::new)
+                .setStatus(status);
     }
 
+
     @Transactional
-    public void postNewTask(Integer employeeId, TaskDTO newTask) {
-        throw new java.lang.UnsupportedOperationException("implement postNewTask");
+    public void postNewTask(Integer employeeId, TaskDto newTask) {
+        log.info("Trying to add task {} to user {}", newTask, employeeId);
+
+        final var task = (Task) modelMapper.map(newTask, new TypeToken<Task>() {
+        }.getType());
+
+        // ToDo: check if task already added ?
+        employeeRepository.findById(employeeId).orElseThrow(EntityNotFoundException::new)
+                .getTasks().add(task);
     }
 }

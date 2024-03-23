@@ -1,22 +1,35 @@
 package com.onedayoffer.taskdistribution;
 
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
 import java.util.ArrayList;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isA;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * @author Sviridov_V_A
+ * @version 1.0.0-SNAPSHOT
+ * @since 2024-03-23
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class TaskDistributionApplicationTests {
-
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -79,7 +92,7 @@ class TaskDistributionApplicationTests {
 				.andExpect(jsonPath("$[0].id", is(13)));
 
 		this.mockMvc.perform(patch("/employees/5/tasks/13/status")
-				.queryParam("newStatus","DONE"))
+						.queryParam("newStatus", "DONE"))
 				.andDo(print())
 				.andExpect(status().isOk());
 
@@ -96,15 +109,15 @@ class TaskDistributionApplicationTests {
 	@Test
 	void shouldPostNewTask() throws Exception {
 		String request = "{ \"name\": " +
-				"\"new-task-123\", " +
-				"\"taskType\": " +
-				"\"INVENTORY\", " +
-				"\"status\": " +
-				"\"APPOINTED\", " +
-				"\"priority\": " +
-				"2, " +
-				"\"leadTime\": " +
-				"8 }";
+						 "\"new-task-123\", " +
+						 "\"taskType\": " +
+						 "\"INVENTORY\", " +
+						 "\"status\": " +
+						 "\"APPOINTED\", " +
+						 "\"priority\": " +
+						 "2, " +
+						 "\"leadTime\": " +
+						 "8 }";
 
 		this.mockMvc.perform(get("/employees/2/tasks"))
 				.andDo(print())
@@ -114,8 +127,8 @@ class TaskDistributionApplicationTests {
 				.andExpect(jsonPath("$.*", hasSize(3)));
 
 		this.mockMvc.perform(post("/employees/2/tasks")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(request))
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(request))
 				.andDo(print())
 				.andExpect(status().isCreated());
 
