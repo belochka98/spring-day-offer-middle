@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,8 +31,8 @@ public class EmployeeController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<EmployeeDto> getEmployees(@RequestParam(name = "fio", required = false) String fio) {
-        return employeeService.getEmployees(fio);
+    public List<EmployeeDto> getEmployees(@RequestParam(name = "sort", required = false) String sort) {
+        return employeeService.getEmployees(sort);
     }
 
     @GetMapping("{id}")
@@ -55,9 +56,12 @@ public class EmployeeController {
         employeeService.changeTaskStatus(taskId, status);
     }
 
-    @PostMapping("...")
+    @PostMapping("{id}/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    public void postNewTask(/* some params */) {
-        //employeeService.postNewTask ...
+    public void postNewTask(
+            @PathVariable(name = "id") Integer id,
+            @RequestBody TaskDto taskDto
+    ) {
+        employeeService.postNewTask(id, taskDto);
     }
 }

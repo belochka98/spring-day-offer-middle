@@ -1,5 +1,6 @@
 package com.onedayoffer.taskdistribution.services;
 
+import com.onedayoffer.taskdistribution.domain.entities.Employee;
 import com.onedayoffer.taskdistribution.domain.entities.Task;
 import com.onedayoffer.taskdistribution.domain.enums.TaskStatus;
 import com.onedayoffer.taskdistribution.domain.repositories.EmployeeRepository;
@@ -36,10 +37,13 @@ public class EmployeeService {
     private final TaskRepository taskRepository;
     private final ModelMapper modelMapper;
 
-    public List<EmployeeDto> getEmployees(String fio) {
-        final var employees = StringUtils.isBlank(fio)
-                              ? employeeRepository.findAll()
-                              : employeeRepository.findAll(Sort.by(Sort.Direction.ASC, fio));
+    public List<EmployeeDto> getEmployees(String sort) {
+        List<Employee> employees;
+        if (StringUtils.isBlank(sort)) {
+            employees = employeeRepository.findAll();
+        } else {
+            employees = employeeRepository.findAll(Sort.by(sort.equals("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC, "fio"));
+        }
 
         return modelMapper.map(employees, new TypeToken<List<EmployeeDto>>() {
         }.getType());
@@ -79,8 +83,11 @@ public class EmployeeService {
         final var task = (Task) modelMapper.map(newTask, new TypeToken<Task>() {
         }.getType());
 
-        // ToDo: check if task already added ?
-        employeeRepository.findById(employeeId).orElseThrow(EntityNotFoundException::new)
-                .getTasks().add(task);
+        final var employee = employeeRepository.findById(employeeId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        task.setEmployee(employee);
+
+        taskRepository.save(task);
     }
 }
